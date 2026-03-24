@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-
+import { NextResponse } from "next/server"; 
 interface Payload {
   id: number;
   name: string;
@@ -7,6 +7,7 @@ interface Payload {
   aleatory: number;
 }
 
+//roles del hospital
 type Rol_id = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 export function crearToken(id: number, name: string, rol_id: number): string {
@@ -14,43 +15,39 @@ export function crearToken(id: number, name: string, rol_id: number): string {
   return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: "24h" });
 }
 
-export function validarToken(token?: string): Payload {
-  if (!token) throw new Error("Acceso denegado");
+// Retorna null si falla
+export function validarToken(token: string | null): Payload | null {
+  if (!token) return null;
   try {
     return jwt.verify(token, process.env.JWT_SECRET!) as Payload;
-    } catch {
-    throw new Error("Token inválido o expirado");
+  } catch {
+    return null;
   }
 }
 
-export function verificarRol(token: string | undefined, rolesPermitidos: Rol_id[]): Payload {
+
+// revisa el token, valida los roles y te devuelve un error o el usuario.
+export function requiereRol(req: Request, rolesPermitidos: Rol_id[]) {
+  // Extraemos el token del encabezado (headers) de la petición
+  const authHeader = req.headers.get("authorization");
+  const token = authHeader?.split(" ")[1] || null;
+
   const payload = validarToken(token);
 
-  if (!rolesPermitidos.includes(payload.rol_id)) {
-    throw new Error("No tienes permisos para esta acción");
+  // Existe y es valido
+  if (!payload) {
+    return { 
+      error: NextResponse.json({ mensaje: "Acceso no autorizado. Token inválido o expirado." }, { status: 401 }) 
+    };
   }
 
-  return payload;
+  // su rol está en la lista
+  if (!rolesPermitidos.includes(payload.rol_id as Rol_id)) {
+    return { 
+      error: NextResponse.json({ mensaje: "Acceso prohibido. Tu rol no tiene permisos." }, { status: 403 }) 
+    };
+  }
+
+  // Si pasa regresa datos del usuario
+  return { usuario: payload };
 }
-
-export function requiereRol(...rolesPermitidos: Rol_id[]) {
-  return (req: Request, res: Response, next: Function) => {
-    try {
-      const token = req.headers.get("authorization")?.split(" ")[1];
-      const payload = validarToken(token);
-
-      if (!rolesPermitidos.includes(payload.rol_id)) {
-        return res.status(403).json({ mensaje: "Acceso prohibido" });
-      }
-
-      req.user = payload; // disponible en el siguiente handler
-      next();
-    } catch (error) {
-      res.status(401).json({ mensaje: error.message });
-    }
-  };
-}
-
-// Uso en las rutas:
-/*router.get("/admin/dashboard", requiereRol(1), dashboardController);
-router.post("/articulos", requiereRol(1, 2), crearArticuloController);*/

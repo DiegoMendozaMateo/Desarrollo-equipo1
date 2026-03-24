@@ -19,7 +19,6 @@ export async function PATCH(
       // Registrar el intento de violación de seguridad
       // Aunque falló, lo guardamos en el log (requiere que el token sea válido al menos para saber quién fue)
 
-      
       return auth.error; 
     }
 
@@ -34,11 +33,10 @@ export async function PATCH(
       return NextResponse.json({ mensaje: "El usuario a modificar no existe." }, { status: 404 });
     }
 
-    // 3. Transacción Segura
-    // Usamos $transaction para asegurar que se cambie el rol Y se guarde el log al mismo tiempo.
+   // 3. Transacción Segura
     const resultado = await prisma.$transaction(async (tx) => {
       
-      //  Actualizar el rol en la base de datos
+      // Actualizar el rol en la base de datos
       const usuarioActualizado = await tx.usuario.update({
         where: { id: usuarioIdObjetivo },
         data: { rol_id: nuevoRolId }
@@ -48,8 +46,10 @@ export async function PATCH(
       await tx.auditLog.create({
         data: {
           accion: "CAMBIO_DE_ROL",
-          descripcion: `Asignación de rol ${nuevoRolId} al usuario: ${usuarioExiste.correo}`,
-          usuarioId: administrador.id, // Quién hizo el cambio
+          // ¡Aquí cambiamos .correo por .email!
+          descripcion: `Asignación de rol ${nuevoRolId} al usuario: ${usuarioExiste.email}`,
+          // ¡Aquí cambiamos usuarioId por usuario_id!
+          usuario_id: administrador.id, 
         }
       });
 

@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-//const PUBLIC_ROUTES = [];
+const PUBLIC_ROUTES = [
+  "/",
+  "/registro",
+  "/auth/login",
+  "/auth/register",
+];
 
 function isTokenValid(token: string): boolean {
   try {
@@ -17,8 +22,8 @@ function isTokenValid(token: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
-  // if (isPublic) return NextResponse.next();
+  const isPublic = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  if (isPublic) return NextResponse.next();
 
   const token =
     request.cookies.get("token")?.value ??
@@ -33,11 +38,3 @@ export function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
-/*
-export const config = {
-  matcher: [
-    "/api/((?!auth/login|auth/register|topics).)*",
-    "/dashboard/:path*",
-    "/quiz/:path*",
-  ],
-};*/

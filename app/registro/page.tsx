@@ -78,17 +78,38 @@ export default function RegistroUsuario() {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       return;
     }
-    // Aquí conectas con tu API / Server Action
+
     const { confirmar_password, ...payload } = form;
-    console.log("Payload:", payload);
-    setSubmitted(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 409) {
+          setErrors({ email: data.error });
+        } else {
+          setErrors({ email: data.error ?? "Error al registrar usuario" });
+        }
+        return;
+      }
+
+      setSubmitted(true);
+    } catch {
+      setErrors({ email: "No se pudo conectar con el servidor" });
+    }
   };
 
   const handleReset = () => {

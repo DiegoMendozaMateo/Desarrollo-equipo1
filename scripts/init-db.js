@@ -1,30 +1,29 @@
-
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
 
 async function initDB() {
   try {
-    // Leer el archivo SQL
+    // Ruta al archivo SQL
     const schemaPath = path.join(__dirname, '../sql/hospital_schema.sql');
     const schema = fs.readFileSync(schemaPath, 'utf8');
 
-    // Conexión a MariaDB
+    // Conexión a MariaDB usando variables de entorno
     const connection = await mysql.createConnection({
       host: process.env.DB_HOST || '127.0.0.1',
-      user: process.env.DB_USER || 'user',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
       port: Number(process.env.DB_PORT) || 3306,
-      password: process.env.DB_PASSWORD || 'pass', // cámbialo según tu configuración
       multipleStatements: true
     });
 
-    // Ejecutar el script
+    // Ejecutar el script SQL
     await connection.query(schema);
-    console.log('✅ Base de datos inicializada correctamente');
+    console.log('✅ Base de datos Hospital inicializada correctamente en MariaDB');
 
     await connection.end();
   } catch (err) {
-    console.error('❌ Error al inicializar la base de datos:', err);
+    console.error('❌ Error al inicializar la base de datos:', err.message);
     process.exit(1);
   }
 }

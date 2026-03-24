@@ -2,17 +2,6 @@
 
 import { useState } from "react";
 
-type Turno = "Matutino" | "Vespertino" | "Nocturno" | "Mixto";
-
-type DiaSemana =
-  | "Lunes"
-  | "Martes"
-  | "Miércoles"
-  | "Jueves"
-  | "Viernes"
-  | "Sábado"
-  | "Domingo";
-
 interface Rol {
   id: number;
   nombre: string;
@@ -24,10 +13,7 @@ interface FormState {
   password: string;
   confirmar_password: string;
   rol_id: string;
-  turno: Turno;
-  hora_entrada: string;
-  hora_salida: string;
-  dias_laborales: DiaSemana[];
+
 }
 
 interface FormErrors {
@@ -36,7 +22,7 @@ interface FormErrors {
   password?: string;
   confirmar_password?: string;
   rol_id?: string;
-  dias_laborales?: string;
+
 }
 
 // En producción trae estos datos desde tu API / DB
@@ -51,38 +37,13 @@ const ROLES: Rol[] = [
   { id: 8, nombre: "Personal Operativo" },
 ];
 
-const TURNOS: Turno[] = ["Matutino", "Vespertino", "Nocturno", "Mixto"];
-
-const DIAS: DiaSemana[] = [
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-  "Domingo",
-];
-
-const DIAS_ABREV: Record<DiaSemana, string> = {
-  Lunes: "Lu",
-  Martes: "Ma",
-  Miércoles: "Mi",
-  Jueves: "Ju",
-  Viernes: "Vi",
-  Sábado: "Sa",
-  Domingo: "Do",
-};
-
 const INITIAL_STATE: FormState = {
   nombre: "",
   email: "",
   password: "",
   confirmar_password: "",
   rol_id: "",
-  turno: "Matutino",
-  hora_entrada: "",
-  hora_salida: "",
-  dias_laborales: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"],
+
 };
 
 export default function RegistroUsuario() {
@@ -105,8 +66,6 @@ export default function RegistroUsuario() {
     else if (form.password !== form.confirmar_password)
       e.confirmar_password = "Las contraseñas no coinciden";
     if (!form.rol_id) e.rol_id = "Selecciona un rol";
-    if (form.dias_laborales.length === 0)
-      e.dias_laborales = "Selecciona al menos un día";
     return e;
   };
 
@@ -117,17 +76,6 @@ export default function RegistroUsuario() {
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name as keyof FormErrors])
       setErrors((prev) => ({ ...prev, [name]: undefined }));
-  };
-
-  const toggleDia = (dia: DiaSemana) => {
-    setForm((prev) => ({
-      ...prev,
-      dias_laborales: prev.dias_laborales.includes(dia)
-        ? prev.dias_laborales.filter((d) => d !== dia)
-        : [...prev.dias_laborales, dia],
-    }));
-    if (errors.dias_laborales)
-      setErrors((prev) => ({ ...prev, dias_laborales: undefined }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -309,77 +257,6 @@ export default function RegistroUsuario() {
                   </option>
                 ))}
               </select>
-            </Field>
-          </section>
-
-          {/* Horario */}
-          <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">
-              Horario de trabajo
-            </h2>
-
-            <Field label="Turno">
-              <div className="grid grid-cols-4 gap-2">
-                {TURNOS.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setForm((prev) => ({ ...prev, turno: t }))}
-                    className={[
-                      "py-2 rounded-xl border text-sm font-medium transition-all",
-                      form.turno === t
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-slate-200 text-slate-600 hover:bg-slate-50",
-                    ].join(" ")}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </Field>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Hora de entrada" hint="Opcional">
-                <input
-                  type="time"
-                  name="hora_entrada"
-                  value={form.hora_entrada}
-                  onChange={handleChange}
-                  className={inputCls()}
-                />
-              </Field>
-              <Field label="Hora de salida" hint="Opcional">
-                <input
-                  type="time"
-                  name="hora_salida"
-                  value={form.hora_salida}
-                  onChange={handleChange}
-                  className={inputCls()}
-                />
-              </Field>
-            </div>
-
-            <Field label="Días laborales" error={errors.dias_laborales}>
-              <div className="flex gap-2 flex-wrap">
-                {DIAS.map((dia) => {
-                  const activo = form.dias_laborales.includes(dia);
-                  return (
-                    <button
-                      key={dia}
-                      type="button"
-                      onClick={() => toggleDia(dia)}
-                      className={[
-                        "w-10 h-10 rounded-xl border text-sm font-medium transition-all",
-                        activo
-                          ? "bg-blue-600 border-blue-600 text-white"
-                          : "border-slate-200 text-slate-500 hover:bg-slate-50",
-                      ].join(" ")}
-                    >
-                      {DIAS_ABREV[dia]}
-                    </button>
-                  );
-                })}
-              </div>
             </Field>
           </section>
 

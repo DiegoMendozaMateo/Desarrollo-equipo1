@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" // Usa mysql para MariaDB
+  url      = env("DATABASE_URL")
+}
+
+model Rol {
+  id          Int       @id @default(autoincrement()) @db.UnsignedInt
+  nombre      String    @unique @db.VarChar(100)
+  descripcion String?   @db.VarChar(255)
+  created_at  DateTime  @default(now()) @db.Timestamp(0)
+  usuarios    Usuario[]
+
+  @@map("roles")
+}
+
+model Usuario {
+  id             Int       @id @default(autoincrement()) @db.UnsignedInt
+  nombre         String    @db.VarChar(100)
+  email          String    @unique @db.VarChar(150)
+  password       String    @db.VarChar(255)
+  rol_id         Int       @db.UnsignedInt
+  turno          Turno     @default(Matutino)
+  hora_entrada   DateTime? @db.Time(0)
+  hora_salida    DateTime? @db.Time(0)
+  dias_laborales String    @default("Lunes,Martes,Miércoles,Jueves,Viernes") // Set se maneja como String en Prisma
+  activo         Boolean   @default(true)
+  created_at     DateTime  @default(now()) @db.Timestamp(0)
+  updated_at     DateTime  @updatedAt @db.Timestamp(0)
+
+  rol            Rol       @relation(fields: [rol_id], references: [id])
+  pacientes      Paciente[]
+  citas          Cita[]
+  auditLogs      AuditLog[]
+
+  @@map("usuarios")
+}
+
+model HospitalOrigen {
+  id        Int        @id @default(autoincrement()) @db.UnsignedInt
+  nombre    String     @unique @db.VarChar(150)
+  ciudad    String?    @db.VarChar(100)
+  estado    String?    @db.VarChar(100)
+  telefono  String?    @db.VarChar(20)
+  pacientes Paciente[]
+
+
+  @@map("hospitales_origen")
+}
+
+model Paciente {
+  id                 Int             @id @default(autoincrement()) @db.UnsignedInt
+  nombre             String          @db.VarChar(100)
+  apellido_paterno   String          @db.VarChar(100)
+  apellido_materno   String?         @db.VarChar(100)
+  fecha_nacimiento   DateTime?       @db.Date
+  sexo               Sexo?
+  telefono_contacto  String?         @db.VarChar(20)
+  diagnostico        String          @db.Text
+  fecha_ingreso      DateTime        @default(now()) @db.DateTime(0)
+  fecha_egreso       DateTime?       @db.DateTime(0)
+  estado             EstadoPaciente  @default(Hospitalizado)
+  referido           Boolean         @default(false)
+  hospital_origen_id Int?            @db.UnsignedInt
+  medico_id          Int?            @db.UnsignedInt
+  created_at         DateTime        @default(now()) @db.Timestamp(0)
+  updated_at         DateTime        @updatedAt @db.Timestamp(0)
+
+  hospital_origen    HospitalOrigen? @relation(fields: [hospital_origen_id], references: [id])
+  medico             Usuario?        @relation(fields: [medico_id], references: [id])
+  citas              Cita[]
+  
+
+  @@index([estado])
+  @@index([fecha_ingreso])
+  @@index([medico_id])
+  @@map("pacientes")
+}
+
+model Cita {
+  id           Int        @id @default(autoincrement()) @db.UnsignedInt
+  paciente_id  Int        @db.UnsignedInt
+  usuario_id   Int        @db.UnsignedInt
+  fecha_hora   DateTime   @db.DateTime(0)
+  duracion_min Int        @default(30) @db.SmallInt
+  motivo       String?    @db.VarChar(255)
+  estado       EstadoCita @default(Programada)
+  notas        String?    @db.Text
+  created_at   DateTime   @default(now()) @db.Timestamp(0)
+
+  paciente     Paciente   @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  usuario      Usuario    @relation(fields: [usuario_id], references: [id])
+
+  @@index([fecha_hora])
+  @@index([usuario_id])
+  @@map("citas")
+}
+
+enum Turno {
+  Matutino
+  Vespertino
+  Nocturno
+  Mixto
+}
+
+enum Sexo {
+  M
+  F
+  Otro
+}
+
+enum EstadoPaciente {
+  Hospitalizado
+  Ambulatorio
+  Alta
+  Fallecido
+}
+
+enum EstadoCita {
+  Programada
+  Completada
+  Cancelada
+  No_asistio @map("No asistió")
+}
+
+
+model AuditLog {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  accion      String   @db.VarChar(100)
+  descripcion String   @db.Text
+  fecha       DateTime @default(now()) @db.Timestamp(0)
+  usuario_id  Int      @db.UnsignedInt
+
+  // Relación con el usuario que hizo la acción
+  usuario     Usuario  @relation(fields: [usuario_id], references: [id])
+
+  @@map("audit_logs")
+}

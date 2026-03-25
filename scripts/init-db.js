@@ -11,19 +11,19 @@ async function initDB() {
     // Conexión a MariaDB usando variables de entorno
     const connection = await mysql.createConnection({
       host: process.env.DB_HOST || '127.0.0.1',
-      user: process.env.DB_USER || 'dev_user',
-      password: process.env.DB_PASSWORD || 'password123',
+      user: process.env.DB_USER || 'user',
+      password: process.env.DB_PASSWORD || 'pass',
       port: Number(process.env.DB_PORT) || 3306,
       multipleStatements: true
     });
 
     // Ejecutar el script SQL
     await connection.query(schema);
-    console.log('✅ Base de datos Hospital inicializada correctamente en MariaDB');
+    console.log('Base de datos Hospital inicializada correctamente en MariaDB');
 
     await connection.end();
   } catch (err) {
-    console.error('❌ Error al inicializar la base de datos:', err.message);
+    console.error('Error al inicializar la base de datos:', err.message);
     process.exit(1);
   }
 }

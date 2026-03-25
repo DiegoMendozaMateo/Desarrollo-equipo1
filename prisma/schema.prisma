@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model citas {
+  id           Int          @id @default(autoincrement()) @db.UnsignedInt
+  paciente_id  Int          @db.UnsignedInt
+  usuario_id   Int          @db.UnsignedInt
+  fecha_hora   DateTime     @db.DateTime(0)
+  duracion_min Int          @default(30) @db.SmallInt
+  motivo       String?      @db.VarChar(255)
+  estado       citas_estado @default(Programada)
+  notas        String?      @db.Text
+  created_at   DateTime     @default(now()) @db.Timestamp(0)
+  pacientes    pacientes    @relation(fields: [paciente_id], references: [id], onDelete: Cascade, map: "fk_cita_paciente")
+  usuarios     usuarios     @relation(fields: [usuario_id], references: [id], map: "fk_cita_usuario")
+
+  @@index([paciente_id], map: "fk_cita_paciente")
+  @@index([fecha_hora], map: "idx_cita_fecha")
+  @@index([usuario_id], map: "idx_cita_usuario")
+}
+
+model hospitales_origen {
+  id        Int         @id @default(autoincrement()) @db.UnsignedInt
+  nombre    String      @unique(map: "uq_hospital_nombre") @db.VarChar(150)
+  ciudad    String?     @db.VarChar(100)
+  estado    String?     @db.VarChar(100)
+  telefono  String?     @db.VarChar(20)
+  pacientes pacientes[]
+}
+
+model pacientes {
+  id                 Int                @id @default(autoincrement()) @db.UnsignedInt
+  nombre             String             @db.VarChar(100)
+  apellido_paterno   String             @db.VarChar(100)
+  apellido_materno   String?            @db.VarChar(100)
+  fecha_nacimiento   DateTime?          @db.Date
+  sexo               pacientes_sexo?
+  telefono_contacto  String?            @db.VarChar(20)
+  diagnostico        String             @db.Text
+  fecha_ingreso      DateTime           @default(now()) @db.DateTime(0)
+  fecha_egreso       DateTime?          @db.DateTime(0)
+  estado             pacientes_estado   @default(Hospitalizado)
+  referido           Boolean            @default(false)
+  hospital_origen_id Int?               @db.UnsignedInt
+  medico_id          Int?               @db.UnsignedInt
+  created_at         DateTime           @default(now()) @db.Timestamp(0)
+  updated_at         DateTime           @default(now()) @db.Timestamp(0)
+  citas              citas[]
+  hospitales_origen  hospitales_origen? @relation(fields: [hospital_origen_id], references: [id], map: "fk_paciente_hospital_origen")
+  usuarios           usuarios?          @relation(fields: [medico_id], references: [id], map: "fk_paciente_medico")
+
+  @@index([hospital_origen_id], map: "fk_paciente_hospital_origen")
+  @@index([estado], map: "idx_paciente_estado")
+  @@index([fecha_ingreso], map: "idx_paciente_ingreso")
+  @@index([medico_id], map: "idx_paciente_medico")
+}
+
+model roles {
+  id          Int        @id @default(autoincrement()) @db.UnsignedInt
+  nombre      String     @unique(map: "uq_rol_nombre") @db.VarChar(100)
+  descripcion String?    @db.VarChar(255)
+  created_at  DateTime   @default(now()) @db.Timestamp(0)
+  usuarios    usuarios[]
+}
+
+model usuarios {
+  id             Int            @id @default(autoincrement()) @db.UnsignedInt
+  nombre         String         @db.VarChar(100)
+  email          String         @unique(map: "uq_email") @db.VarChar(150)
+  password       String         @db.VarChar(255)
+  rol_id         Int            @db.UnsignedInt
+  turno          usuarios_turno @default(Matutino)
+  hora_entrada   DateTime?      @db.Time(0)
+  hora_salida    DateTime?      @db.Time(0)
+  dias_laborales String         @default("Lunes,Martes,Miércoles,Jueves,Viernes")
+  activo         Boolean        @default(true)
+  created_at     DateTime       @default(now()) @db.Timestamp(0)
+  updated_at     DateTime       @default(now()) @db.Timestamp(0)
+  citas          citas[]
+  pacientes      pacientes[]
+  roles          roles          @relation(fields: [rol_id], references: [id], map: "fk_usuario_rol")
+
+  @@index([rol_id], map: "fk_usuario_rol")
+}
+
+enum pacientes_sexo {
+  M
+  F
+  Otro
+}
+
+enum usuarios_turno {
+  Matutino
+  Vespertino
+  Nocturno
+  Mixto
+}
+
+enum citas_estado {
+  Programada
+  Completada
+  Cancelada
+  No_asisti_ @map("No asistió")
+}
+
+enum pacientes_estado {
+  Hospitalizado
+  Ambulatorio
+  Alta
+  Fallecido
+}

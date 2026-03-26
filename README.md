@@ -38,9 +38,15 @@ Desarrollo-Equipo1/
 │   ├── layout.tsx                    ← Layout raíz
 │   ├── page.tsx                      ← Login / Registro (/)
 │   └── api/
-│       └─ auth/
-│           ├── register/route.ts     ← POST /api/auth/register
-│           └── login/route.ts        ← POST /api/auth/login
+│       ├─ auth/
+│       |   ├── register/route.ts     ← POST /api/auth/register
+│       |   └── login/route.ts        ← POST /api/auth/login
+│       ├─ usuarios/
+│       |   ├── route.ts              ← POST /api/usuarios
+│       |   └── [id]/route.ts         ← POST /api/usuarios?id=
+│       └─ pacientes/
+│           ├── referido/route.ts     ← POST /api/paciente/referido
+│           └── citas/route.ts        ← POST /api/paciente/citas
 ├── lib/
 │   ├── db.js                         ← Pool de conexión a MariaDB
 │   └── auth.ts                       ← Helpers JWT

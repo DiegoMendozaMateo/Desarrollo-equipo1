@@ -40,10 +40,10 @@ Desarrollo-Equipo1/
 │   └── api/
 │       ├─ auth/
 │       |   ├── register/route.ts     ← POST /api/auth/register
-│       |   └── login/route.ts        ← POST /api/auth/login
+│       |   └── login/route.ts        ← GET /api/auth/login
 │       ├─ usuarios/
 │       |   ├── route.ts              ← POST /api/usuarios
-│       |   └── [id]/route.ts         ← POST /api/usuarios?id=
+│       |   └── id/route.ts         ← POST /api/usuarios/id
 │       └─ pacientes/
 │           ├── referido/route.ts     ← POST /api/paciente/referido
 │           └── citas/route.ts        ← POST /api/paciente/citas
@@ -51,15 +51,15 @@ Desarrollo-Equipo1/
 │   ├── db.js                         ← Pool de conexión a MariaDB
 │   └── auth.ts                       ← Helpers JWT
 ├── models/
-│   └── user.model.ts                 ← Queries de usuarios
+│   ├── pacientes.model.ts                ← Queries de pacientes
+│   ├── citas.model.ts                    ← Queries de citas
+│   ├── hospitales.model.ts               ← Queries de hospitales de origen
+│   ├── roles.model.ts                    ← Queries de roles
+│   └── usuarios.model.ts                 ← Queries de usuarios
 ├── middleware.ts                     ← Verificación JWT (Next.js middleware)
 └── public/                           ← Assets estáticos
 ```
     Se estan verificando rutas
-
-### 
-
-
 
 
 *Proyecto · Desarrollo Web 2026 LGSC*

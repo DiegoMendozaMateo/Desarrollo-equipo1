@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import { crearToken } from "@/lib/auth";
-import pool from "@/lib/db";
+import { Usuario ,getUserByEmail } from "@/models/usuarios.model";
 
-export async function POST(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const { email, password } = await req.json();
 
@@ -14,24 +14,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const conn = await pool.getConnection();
-    const rows = await conn.query(
-      "SELECT id, nombre, password FROM usuarios WHERE email = ?",
-      [email]
-    );
-    conn.release();
-
-    const user = rows[0];
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    const user: Usuario | undefined = await getUserByEmail(email);
+    if (!user) {
       return NextResponse.json(
-        { mensaje: "Credenciales inválidas" },
+        { mensaje: "Datos inválidas" },
         { status: 401 }
       );
     }
 
-    const token = crearToken(user.id, user.nombre, user.password);
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return NextResponse.json(
+        { mensaje: "Contraseña incorrecta" },
+        { status: 401 }
+      );
+    }
+
+    const token = crearToken(user.id, user.nombre, user.rol_id);
     return NextResponse.json({ token });
-  } catch {
+    } catch {
     return NextResponse.json(
       { error: "Error en el servidor" },
       { status: 500 }

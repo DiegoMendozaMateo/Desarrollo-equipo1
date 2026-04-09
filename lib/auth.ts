@@ -25,7 +25,6 @@ export function validarToken(token: string | null): Payload | null {
   }
 }
 
-
 // revisa el token, valida los roles y te devuelve un error o el usuario.
 export function requiereRol(req: Request, rolesPermitidos: Rol_id[]) {
   // Extraemos el token del encabezado (headers) de la petición

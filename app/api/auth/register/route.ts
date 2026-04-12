@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { crearToken } from "@/lib/auth";
 import {getUserByEmail, createUser} from "@/models/usuarios.model";
 
 export async function POST(req: NextRequest) {
   try {
-    const { nombre, email, password, rol_id } = await req.json();
+    const { nombre, email, password, rol_id , telefono, datos_adicionales, } = await req.json();
 
-    if (!nombre || !email || !password || !rol_id) {
+    if (!nombre || !email || !password || !rol_id || !telefono) {
       return NextResponse.json(
         { error: "Todos los campos son requeridos" },
         { status: 400 }
@@ -28,6 +27,14 @@ export async function POST(req: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { error: "Correo electrónico no válido" },
+        { status: 400 }
+      );
+    }
+
+    // Validar que el teléfono sea un número    
+    if (isNaN(telefono)) {
+      return NextResponse.json(
+        { error: "El teléfono debe ser un número" },
         { status: 400 }
       );
     }

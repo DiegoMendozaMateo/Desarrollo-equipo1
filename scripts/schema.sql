@@ -50,9 +50,20 @@ CREATE TABLE IF NOT EXISTS usuarios (
 CREATE TABLE IF NOT EXISTS horarios (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
   usuario_id  INT UNSIGNED NOT NULL,
-  dia_semana  ENUM('Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo') NOT NULL,
-  hora_inicio TIME         NOT NULL,
-  hora_fin    TIME         NOT NULL,
+  lunes_entrada    TIME         NULL,   -- NULL = no trabaja ese día
+  lunes_salida     TIME         NULL,
+  martes_entrada   TIME         NULL,
+  martes_salida    TIME         NULL,
+  miercoles_entrada TIME        NULL,
+  miercoles_salida  TIME        NULL,
+  jueves_entrada   TIME         NULL,
+  jueves_salida    TIME         NULL,
+  viernes_entrada  TIME         NULL,
+  viernes_salida   TIME         NULL,
+  sabado_entrada   TIME         NULL,
+  sabado_salida    TIME         NULL,
+  domingo_entrada  TIME         NULL,
+  domingo_salida   TIME         NULL,
   created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   CONSTRAINT fk_horario_usuario

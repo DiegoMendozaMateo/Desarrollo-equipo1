@@ -3,9 +3,11 @@ import pool from "@/lib/db";
 export interface Usuario {
   id: number;
   nombre: string;
+  telefono: number;
   email: string;
   password: string;
   rol_id: number;
+  datos_adicionales?: any;
 }
 
 // Obtener usuarios por correo electrónico
@@ -20,22 +22,22 @@ export async function getUserByEmail(email: string) {
 }
 
 // Crear nuevo usuario
-export async function createUser(nombre: string, email: string, password: string, rol_id: number) {
+export async function createUser(nombre: string, telefono: number, email: string, password: string, rol_id: number, datos_adicionales?: any) {
   const conn = await pool.getConnection();
   const [result] = await conn.query(
-    "INSERT INTO usuarios (nombre, email, password, rol_id) VALUES (?, ?, ?, ?)",
-    [nombre, email, password, rol_id]
+    "INSERT INTO usuarios (nombre, telefono, email, password, rol_id, datos_adicionales) VALUES (?, ?, ?, ?, ?, ?)",
+    [nombre, telefono, email, password, rol_id, datos_adicionales ? JSON.stringify(datos_adicionales) : null]
   );
   conn.release();
   return result.insertId;
 }
 
 // Actualizar usuario
-export async function updateUser(id: number, email: string, password: string, rol_id: number) {
+export async function updateUser(id: number, telefono: number, email: string, password: string, rol_id: number, datos_adicionales?: any) {
   const conn = await pool.getConnection();
   await conn.query(
-    "UPDATE usuarios SET email = ?, password = ?, rol_id = ? WHERE id = ?",
-    [email, password, rol_id, id]
+    "UPDATE usuarios SET telefono = ?, email = ?, password = ?, rol_id = ?, datos_adicionales = ? WHERE id = ?",
+    [telefono, email, password, rol_id, datos_adicionales ? JSON.stringify(datos_adicionales) : null, id]
   );
   conn.release();
 }

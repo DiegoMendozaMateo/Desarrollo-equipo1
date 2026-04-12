@@ -118,8 +118,7 @@ CREATE TABLE IF NOT EXISTS datos_clinicos (
   usuario_id           INT UNSIGNED NOT NULL,
   fecha_hora           DATETIME     NOT NULL,
   sintomas             TEXT         NOT NULL,
-  presion_sistolica    DECIMAL(5,2) NOT NULL,   -- mmHg
-  presion_diastolica   DECIMAL(5,2) NOT NULL,   -- mmHg
+  presion_arterial     DECIMAL(5,2) NOT NULL,   -- mmHg
   temperatura          DECIMAL(4,1) NOT NULL,   -- °C
   saturacion_oxigeno   DECIMAL(4,1) NOT NULL,   -- %
   estatura             DECIMAL(5,1) NOT NULL,   -- cm

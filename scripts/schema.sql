@@ -1,6 +1,7 @@
--- schema temporal y sujeto a cambios
--- MariaDB Hospital Schema
--- mariadb -u root -p < hospital_schema.sql
+-- ============================================================
+--  Hospital — Schema completo y corregido
+--  mariadb -u root -p < hospital_schema.sql
+-- ============================================================
 
 CREATE DATABASE IF NOT EXISTS Hospital
   CHARACTER SET utf8mb4
@@ -8,57 +9,33 @@ CREATE DATABASE IF NOT EXISTS Hospital
 
 USE Hospital;
 
--- ============================================================
--- TABLA: roles
--- Catálogo de roles del personal hospitalario
--- ============================================================
+-- ------------------------------------------------------------
+--  Roles
+-- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS roles (
-  id          INT UNSIGNED   NOT NULL AUTO_INCREMENT,
-  nombre      VARCHAR(100)   NOT NULL,
-  descripcion VARCHAR(255)       NULL,
-  created_at  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
+  id     INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre VARCHAR(50)  NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_rol_nombre (nombre)
+  UNIQUE KEY unique_nombre (nombre)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
-INSERT IGNORE INTO roles (nombre, descripcion) VALUES
-  ('Director General',               'Máxima autoridad administrativa y clínica del hospital'),
-  ('Subdirector Administrativo',     'Gestión de recursos humanos, financieros y operativos'),
-  ('Médico Especialista',            'Atención médica especializada a pacientes'),
-  ('Personal de Enfermería',         'Cuidado directo y seguimiento de pacientes'),
-  ('Responsable de Servicios Generales', 'Supervisión de limpieza, mantenimiento e infraestructura'),
-  ('Personal de Apoyo Clínico',      'Laboratorio, radiología, farmacia y otros apoyos diagnósticos'),
-  ('Trabajador Social',              'Gestión de casos sociales y coordinación con pacientes y familias'),
-  ('Personal Operativo',             'Funciones de soporte general y administrativo');
-
--- ============================================================
--- TABLA: usuarios
--- Personal del hospital con su rol y horario asignado
--- ============================================================
+-- ------------------------------------------------------------
+--  Usuarios
+-- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS usuarios (
-  id              INT UNSIGNED   NOT NULL AUTO_INCREMENT,
-  nombre          VARCHAR(100)   UNIQUE NOT NULL,
-  email           VARCHAR(150)   NOT NULL,
-  password        VARCHAR(255)   NOT NULL,
-  rol_id          INT UNSIGNED   NOT NULL,
-
-  -- Horario de trabajo
-  turno           ENUM('Matutino','Vespertino','Nocturno','Mixto') NOT NULL DEFAULT 'Matutino',
-  hora_entrada    TIME               NULL,
-  hora_salida     TIME               NULL,
-  dias_laborales  SET('Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo')
-                                 NOT NULL DEFAULT 'Lunes,Martes,Miércoles,Jueves,Viernes',
-
-  activo          TINYINT(1)     NOT NULL DEFAULT 1,
-  created_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at      TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                          ON UPDATE CURRENT_TIMESTAMP,
-
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre            VARCHAR(255) NOT NULL,
+  telefono          INT SIGNED   NOT NULL,
+  email             VARCHAR(255) NOT NULL,
+  password_hash     VARCHAR(255) NOT NULL,
+  rol_id            INT UNSIGNED NOT NULL,
+  datos_adicionales JSON         NULL,
+  created_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_email (email),
+  UNIQUE KEY unique_telefono (telefono),
+  UNIQUE KEY unique_email    (email),
   CONSTRAINT fk_usuario_rol
     FOREIGN KEY (rol_id) REFERENCES roles (id)
     ON UPDATE CASCADE
@@ -67,99 +44,170 @@ CREATE TABLE IF NOT EXISTS usuarios (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- TABLA: hospitales_origen
--- Catálogo de hospitales para registrar referencias externas
--- ============================================================
-CREATE TABLE IF NOT EXISTS hospitales_origen (
-  id        INT UNSIGNED   NOT NULL AUTO_INCREMENT,
-  nombre    VARCHAR(150)   NOT NULL,
-  ciudad    VARCHAR(100)       NULL,
-  estado    VARCHAR(100)       NULL,
-  telefono  VARCHAR(20)        NULL,
-
+-- ------------------------------------------------------------
+--  Horarios
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS horarios (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id  INT UNSIGNED NOT NULL,
+  dia_semana  ENUM('Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo') NOT NULL,
+  hora_inicio TIME         NOT NULL,
+  hora_fin    TIME         NOT NULL,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY uq_hospital_nombre (nombre)
+  CONSTRAINT fk_horario_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- TABLA: pacientes
--- Registro de pacientes hospitalizados o en consulta
--- ============================================================
+-- ------------------------------------------------------------
+--  Áreas del hospital
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS areas (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre      VARCHAR(100) NOT NULL,
+  tipo_area   ENUM('Administrativa','Medica') NOT NULL,
+  descripcion TEXT         NULL,
+  created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY unique_nombre (nombre)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  Pacientes
+-- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS pacientes (
-  id                  INT UNSIGNED   NOT NULL AUTO_INCREMENT,
-  nombre              VARCHAR(100)   NOT NULL,
-  apellido_paterno    VARCHAR(100)   NOT NULL,
-  apellido_materno    VARCHAR(100)       NULL,
-  fecha_nacimiento    DATE               NULL,
-  sexo                ENUM('M','F','Otro') NULL,
-  telefono_contacto   VARCHAR(20)        NULL,
-
-  -- Información clínica
-  diagnostico         TEXT           NOT NULL,
-  fecha_ingreso       DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  fecha_egreso        DATETIME           NULL,
-  estado              ENUM('Hospitalizado','Ambulatorio','Alta','Fallecido')
-                                     NOT NULL DEFAULT 'Hospitalizado',
-
-  -- Referencia externa (NULL si ingresó directamente)
-  referido            TINYINT(1)     NOT NULL DEFAULT 0,
-  hospital_origen_id  INT UNSIGNED       NULL,
-
-  -- Médico responsable
-  medico_id           INT UNSIGNED       NULL,
-
-  created_at          TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at          TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP
-                                              ON UPDATE CURRENT_TIMESTAMP,
-
+  id                     INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  nombre                 VARCHAR(255) NOT NULL,
+  edad                   INT          NOT NULL,
+  genero                 ENUM('Masculino','Femenino','Otro') NOT NULL,
+  direccion              VARCHAR(255) NOT NULL,
+  telefono               INT SIGNED   NOT NULL,
+  nombre_representante   VARCHAR(255) NULL,
+  telefono_representante INT SIGNED   NULL,
+  email                  VARCHAR(255) NOT NULL,
+  created_at             TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  CONSTRAINT fk_paciente_hospital_origen
-    FOREIGN KEY (hospital_origen_id) REFERENCES hospitales_origen (id)
-    ON UPDATE CASCADE
-    ON DELETE SET NULL,
-  CONSTRAINT fk_paciente_medico
-    FOREIGN KEY (medico_id) REFERENCES usuarios (id)
-    ON UPDATE CASCADE
-    ON DELETE SET NULL,
-
-  -- Si referido=0 entonces hospital_origen_id debe ser NULL (validación a nivel app)
-  INDEX idx_paciente_estado   (estado),
-  INDEX idx_paciente_ingreso  (fecha_ingreso),
-  INDEX idx_paciente_medico   (medico_id)
+  UNIQUE KEY unique_telefono (telefono),
+  UNIQUE KEY unique_email    (email)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================
--- TABLA: citas
--- Agenda y seguimiento de consultas / revisiones
--- ============================================================
-CREATE TABLE IF NOT EXISTS citas (
-  id            INT UNSIGNED   NOT NULL AUTO_INCREMENT,
-  paciente_id   INT UNSIGNED   NOT NULL,
-  usuario_id    INT UNSIGNED   NOT NULL,   -- médico o enfermero asignado
-  fecha_hora    DATETIME       NOT NULL,
-  duracion_min  SMALLINT       NOT NULL DEFAULT 30,
-  motivo        VARCHAR(255)       NULL,
-  estado        ENUM('Programada','Completada','Cancelada','No asistió')
-                               NOT NULL DEFAULT 'Programada',
-  notas         TEXT               NULL,
-  created_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
+-- ------------------------------------------------------------
+--  Datos clínicos
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS datos_clinicos (
+  id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  paciente_id          INT UNSIGNED NOT NULL,
+  usuario_id           INT UNSIGNED NOT NULL,
+  fecha_hora           DATETIME     NOT NULL,
+  sintomas             TEXT         NOT NULL,
+  presion_sistolica    DECIMAL(5,2) NOT NULL,   -- mmHg
+  presion_diastolica   DECIMAL(5,2) NOT NULL,   -- mmHg
+  temperatura          DECIMAL(4,1) NOT NULL,   -- °C
+  saturacion_oxigeno   DECIMAL(4,1) NOT NULL,   -- %
+  estatura             DECIMAL(5,1) NOT NULL,   -- cm
+  peso                 DECIMAL(5,2) NOT NULL,   -- kg
+  antecedentes_medicos TEXT         NULL,
+  created_at           TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  CONSTRAINT fk_cita_paciente
+  CONSTRAINT fk_datos_clinicos_paciente
     FOREIGN KEY (paciente_id) REFERENCES pacientes (id)
     ON UPDATE CASCADE
     ON DELETE CASCADE,
-  CONSTRAINT fk_cita_usuario
+  CONSTRAINT fk_datos_clinicos_usuario
     FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
     ON UPDATE CASCADE
-    ON DELETE RESTRICT,
-  INDEX idx_cita_fecha (fecha_hora),
-  INDEX idx_cita_usuario (usuario_id)
+    ON DELETE RESTRICT
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  Diagnóstico
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS diagnostico (
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  datos_clinicos_id INT UNSIGNED NOT NULL,
+  diagnostico       TEXT         NOT NULL,
+  tratamiento       TEXT         NOT NULL,   -- medicamentos, dosis y tiempos
+  created_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_diagnostico_datos_clinicos
+    FOREIGN KEY (datos_clinicos_id) REFERENCES datos_clinicos (id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  Intervención médica
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS intervencion_medica (
+  id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  paciente_id        INT UNSIGNED NOT NULL,
+  usuario_id         INT UNSIGNED NOT NULL,
+  datos_clinicos_id  INT UNSIGNED NULL,
+  tipo_intervencion  VARCHAR(150) NOT NULL,
+  fecha_hora         DATETIME     NOT NULL,
+  sala_asignada      VARCHAR(50)  NOT NULL,
+  personal_requerido TEXT         NULL,
+  created_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_intervencion_paciente
+    FOREIGN KEY (paciente_id) REFERENCES pacientes (id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+  CONSTRAINT fk_intervencion_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+  CONSTRAINT fk_intervencion_datos_clinicos
+    FOREIGN KEY (datos_clinicos_id) REFERENCES datos_clinicos (id)
+    ON UPDATE CASCADE
+    ON DELETE SET NULL,
+  INDEX idx_paciente (paciente_id),
+  INDEX idx_fecha    (fecha_hora),
+  INDEX idx_sala     (sala_asignada)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  Logs de auditoría
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS logs (
+  id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  usuario_id INT UNSIGNED NOT NULL,
+  accion     VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  CONSTRAINT fk_log_usuario
+    FOREIGN KEY (usuario_id) REFERENCES usuarios (id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT,
+  INDEX idx_log_usuario (usuario_id),
+  INDEX idx_log_fecha   (created_at)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
+-- ------------------------------------------------------------
+--  Insers iniciales
+-- ------------------------------------------------------------ 
+INSERT IGNORE INTO roles (nombre) VALUES
+  ('Director General'),
+  ('Subdirector Administrativo'),
+  ('Médico Especialista'),
+  ('Personal de Enfermería'),
+  ('Responsable de Servicios Generales'),
+  ('Personal de Apoyo Clínico'),
+  ('Trabajador Social'),
+  ('Personal Operativo');

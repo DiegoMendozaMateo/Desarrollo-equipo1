@@ -1,21 +1,23 @@
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
 const mysql = require('mysql2/promise');
 
 async function initDB() {
   try {
     // Ruta al archivo SQL
     const schemaPath = path.join(__dirname, './schema.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf8');
+    const schema = await fs.promises.readFile(schemaPath, 'utf8');
 
     // Conexión a MariaDB usando variables de entorno
     const connection = await mysql.createConnection({
-      host: process.env.DB_HOST || '127.0.0.1',
-      user: process.env.DB_USER || 'user',
-      password: process.env.DB_PASSWORD || 'pass',
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || 'root',
       port: Number(process.env.DB_PORT) || 3306,
       multipleStatements: true
     });
+
 
     // Ejecutar el script SQL
     await connection.query(schema);
@@ -23,7 +25,7 @@ async function initDB() {
 
     await connection.end();
   } catch (err) {
-    console.error('Error al inicializar la base de datos:', err.message);
+    console.error('Error al inicializar la base de datos:', err);
     process.exit(1);
   }
 }

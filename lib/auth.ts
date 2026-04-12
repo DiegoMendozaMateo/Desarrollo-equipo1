@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server"; 
+/*import {Rol, getAllRoles} from "@/models/roles.model";*/
 interface Payload {
   id: number;
   name: string;

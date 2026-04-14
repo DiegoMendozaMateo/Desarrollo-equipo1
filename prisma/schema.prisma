@@ -68,24 +68,48 @@ model roles {
   usuarios    usuarios[]
 }
 
+// TABLA USUARIOS (Actualizada con nuevos campos y reglas de negocio) 
 model usuarios {
-  id             Int            @id @default(autoincrement()) @db.UnsignedInt
-  nombre         String         @db.VarChar(100)
-  email          String         @unique(map: "uq_email") @db.VarChar(150)
-  password       String         @db.VarChar(255)
-  rol_id         Int            @db.UnsignedInt
-  turno          usuarios_turno @default(Matutino)
-  hora_entrada   DateTime?      @db.Time(0)
-  hora_salida    DateTime?      @db.Time(0)
-  dias_laborales String         @default("Lunes,Martes,Miércoles,Jueves,Viernes")
-  activo         Boolean        @default(true)
-  created_at     DateTime       @default(now()) @db.Timestamp(0)
-  updated_at     DateTime       @default(now()) @db.Timestamp(0)
-  citas          citas[]
-  pacientes      pacientes[]
-  roles          roles          @relation(fields: [rol_id], references: [id], map: "fk_usuario_rol")
+  id                      Int            @id @default(autoincrement()) @db.UnsignedInt
+  nombre                  String         @db.VarChar(100)
+  email                   String         @unique(map: "uq_email") @db.VarChar(150)
+  password                String         @db.VarChar(255)
+  
+  // --- NUEVOS CAMPOS ---
+  numero_empleado         String         @unique @db.VarChar(50) // Obligatorio en Caso de Uso
+  telefono                String?        @db.VarChar(20)         // Obligatorio en Caso de Uso
+  requiere_cambio_password Boolean        @default(true)          // Regla de negocio #4
+  // ----------------------
+
+  rol_id                  Int            @db.UnsignedInt
+  turno                   usuarios_turno @default(Matutino)
+  hora_entrada            DateTime?      @db.Time(0)
+  hora_salida             DateTime?      @db.Time(0)
+  dias_laborales          String         @default("Lunes,Martes,Miércoles,Jueves,Viernes")
+  activo                  Boolean        @default(true)
+  created_at              DateTime       @default(now()) @db.Timestamp(0)
+  updated_at              DateTime       @default(now()) @updatedAt @db.Timestamp(0)
+
+  // Relaciones
+  citas                   citas[]
+  pacientes               pacientes[]
+  roles                   roles          @relation(fields: [rol_id], references: [id], map: "fk_usuario_rol")
+  audit_logs              audit_logs[]   // Relación con auditoría
 
   @@index([rol_id], map: "fk_usuario_rol")
+}
+
+// NUEVA TABLA (Indispensable para el Postcondición #5)
+model audit_logs {
+  id          Int      @id @default(autoincrement()) @db.UnsignedInt
+  accion      String   @db.VarChar(100) // Ejemplo: "Alta de usuario"
+  descripcion String   @db.Text         // Ejemplo: "Alta de usuario: correo@hospital.com"
+  fecha       DateTime @default(now()) @db.Timestamp(0)
+  usuario_id  Int      @db.UnsignedInt  // Quién realizó la acción (Admin)
+
+  usuario     usuarios @relation(fields: [usuario_id], references: [id], map: "fk_audit_usuario")
+
+  @@index([usuario_id], map: "idx_audit_usuario")
 }
 
 enum pacientes_sexo {

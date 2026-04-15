@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS roles (
 --  Usuarios
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS usuarios (
-  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  id                INT SIGNED NOT NULL,
   nombre            VARCHAR(255) NOT NULL,
   telefono          INT SIGNED   NOT NULL,
   email             VARCHAR(255) NOT NULL,
@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
   PRIMARY KEY (id),
   UNIQUE KEY unique_telefono (telefono),
   UNIQUE KEY unique_email    (email),
+  UNIQUE KEY unique_id       (id),
   CONSTRAINT fk_usuario_rol
     FOREIGN KEY (rol_id) REFERENCES roles (id)
     ON UPDATE CASCADE
@@ -49,7 +50,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS horarios (
   id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  usuario_id  INT UNSIGNED NOT NULL,
+  usuario_id  INT SIGNED NOT NULL,
   lunes_entrada    TIME         NULL,   -- NULL = no trabaja ese día
   lunes_salida     TIME         NULL,
   martes_entrada   TIME         NULL,
@@ -114,7 +115,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
 CREATE TABLE IF NOT EXISTS datos_clinicos (
   id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
   paciente_id          INT UNSIGNED NOT NULL,
-  usuario_id           INT UNSIGNED NOT NULL,
+  usuario_id           INT SIGNED NOT NULL,
   fecha_hora           DATETIME     NOT NULL,
   sintomas             TEXT         NOT NULL,
   presion_arterial     DECIMAL(5,2) NOT NULL,   -- mmHg
@@ -161,7 +162,7 @@ CREATE TABLE IF NOT EXISTS diagnostico (
 CREATE TABLE IF NOT EXISTS intervencion_medica (
   id                 INT UNSIGNED NOT NULL AUTO_INCREMENT,
   paciente_id        INT UNSIGNED NOT NULL,
-  usuario_id         INT UNSIGNED NOT NULL,
+  usuario_id         INT SIGNED NOT NULL,
   datos_clinicos_id  INT UNSIGNED NULL,
   tipo_intervencion  VARCHAR(150) NOT NULL,
   fecha_hora         DATETIME     NOT NULL,
@@ -193,7 +194,7 @@ CREATE TABLE IF NOT EXISTS intervencion_medica (
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS logs (
   id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  usuario_id INT UNSIGNED NOT NULL,
+  usuario_id INT SIGNED NOT NULL,
   accion     VARCHAR(255) NOT NULL,
   created_at TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),

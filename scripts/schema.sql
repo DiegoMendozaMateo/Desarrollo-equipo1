@@ -103,8 +103,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
   telefono_representante INT SIGNED   NULL,
   created_at             TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  UNIQUE KEY unique_telefono (telefono),
-  UNIQUE KEY unique_email    (email)
+  UNIQUE KEY unique_telefono (telefono)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;

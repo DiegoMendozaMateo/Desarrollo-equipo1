@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS roles (
 CREATE TABLE IF NOT EXISTS usuarios (
   id                INT SIGNED NOT NULL,
   nombre            VARCHAR(255) NOT NULL,
-  telefono          INT SIGNED   NOT NULL,
+  telefono          VARCHAR(20)   NOT NULL,
   email             VARCHAR(255) NOT NULL,
   password_hash     VARCHAR(255) NOT NULL,
   rol_id            INT UNSIGNED NOT NULL,
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
   edad                   INT          NOT NULL,
   genero                 ENUM('Masculino','Femenino','Otro') NOT NULL,
   direccion              VARCHAR(255) NOT NULL,
-  telefono               INT SIGNED   NOT NULL,
+  telefono               VARCHAR(20)   NOT NULL,
   nombre_representante   VARCHAR(255) NULL,
   telefono_representante INT SIGNED   NULL,
   created_at             TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,

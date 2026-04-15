@@ -1,4 +1,3 @@
-// components/RegistroUsuario.tsx
 "use client";
 
 import { useState } from "react";
@@ -52,14 +51,13 @@ export default function RegistroUsuario() {
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const validate = (): FormErrors => {
     const e: FormErrors = {};
 
     if (!form.nombre.trim()) e.nombre = "Requerido";
-
-    if (!form.numero_empleado.trim())
-      e.numero_empleado = "Requerido";
+    if (!form.numero_empleado.trim()) e.numero_empleado = "Requerido";
 
     if (!form.email.trim()) e.email = "Requerido";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
@@ -67,8 +65,7 @@ export default function RegistroUsuario() {
 
     if (!form.telefono.trim()) e.telefono = "Requerido";
     else if (isNaN(Number(form.telefono))) e.telefono = "Solo números";
-    else if (form.telefono.length < 10)
-      e.telefono = "Mínimo 10 dígitos";
+    else if (form.telefono.length < 10) e.telefono = "Mínimo 10 dígitos";
 
     if (!form.rol_id) e.rol_id = "Selecciona un rol";
 
@@ -76,14 +73,10 @@ export default function RegistroUsuario() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-
     setForm((prev) => ({ ...prev, [name]: value }));
-
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -98,18 +91,31 @@ export default function RegistroUsuario() {
       return;
     }
 
+    setLoading(true);
+
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          nombre: form.nombre,
+          email: form.email,
+          numero_empleado: form.numero_empleado,
+          telefono: Number(form.telefono),       // ← número entero
+          rol_id: Number(form.rol_id),           // ← número entero
+          datos_adicionales: form.datos_adicionales || null,
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        // El servidor devuelve 409 para duplicados de email o teléfono
         if (res.status === 409) {
-          setErrors({ email: data.error });
+          const field = data.error?.toLowerCase().includes("teléfono")
+            ? "telefono"
+            : "email";
+          setErrors({ [field]: data.error });
         } else {
           setErrors({ email: data.error ?? "Error al registrar usuario" });
         }
@@ -117,14 +123,12 @@ export default function RegistroUsuario() {
       }
 
       setSubmitted(true);
-
-      // 🔥 Redirección automática después de 2 segundos
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
+      setTimeout(() => router.push("/login"), 2000);
 
     } catch {
       setErrors({ email: "No se pudo conectar con el servidor" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -134,7 +138,7 @@ export default function RegistroUsuario() {
     setSubmitted(false);
   };
 
-  // 🎉 Pantalla de éxito
+  // Pantalla de éxito
   if (submitted) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -144,25 +148,15 @@ export default function RegistroUsuario() {
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-
-          <h2 className="text-xl font-semibold text-slate-800">
-            Usuario registrado
-          </h2>
-
-          <p className="text-slate-500 text-sm">
+          <h2 className="text-xl font-semibold text-black">Usuario registrado</h2>
+          <p className="text-slate-600 text-sm">
             Se envió una contraseña temporal al correo de{" "}
-            <span className="font-medium text-slate-700">
-              {form.email}
-            </span>
+            <span className="font-medium text-black">{form.email}</span>
           </p>
-
-          <p className="text-xs text-slate-400">
-            Redirigiendo al login...
-          </p>
-
+          <p className="text-xs text-slate-400">Redirigiendo al login...</p>
           <button
             onClick={handleReset}
-            className="mt-2 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="mt-2 w-full py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-black hover:bg-slate-50"
           >
             Registrar otro usuario
           </button>
@@ -178,52 +172,70 @@ export default function RegistroUsuario() {
         {/* Header */}
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-slate-800">
-              Registro de usuario
-            </h1>
-            <p className="text-sm text-slate-400">
-              Nuevo personal hospitalario
-            </p>
+            <h1 className="text-lg font-semibold text-black">Registro de usuario</h1>
+            <p className="text-sm text-slate-500">Nuevo personal hospitalario</p>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
 
           <section className="bg-white rounded-2xl border p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase">
-              Datos de acceso
-            </h2>
+            <h2 className="text-sm font-semibold text-black uppercase">Datos de acceso</h2>
 
             <Field label="Nombre completo" error={errors.nombre}>
-              <input name="nombre" value={form.nombre} onChange={handleChange} className={inputCls(errors.nombre)} />
+              <input
+                name="nombre"
+                value={form.nombre}
+                onChange={handleChange}
+                className={inputCls(errors.nombre)}
+              />
             </Field>
 
             <Field label="Número de empleado" error={errors.numero_empleado}>
-              <input name="numero_empleado" value={form.numero_empleado} onChange={handleChange} className={inputCls(errors.numero_empleado)} />
+              <input
+                name="numero_empleado"
+                value={form.numero_empleado}
+                onChange={handleChange}
+                className={inputCls(errors.numero_empleado)}
+              />
             </Field>
 
             <Field label="Correo electrónico" error={errors.email}>
-              <input type="email" name="email" value={form.email} onChange={handleChange} className={inputCls(errors.email)} />
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                className={inputCls(errors.email)}
+              />
             </Field>
 
             <Field label="Teléfono" error={errors.telefono}>
-              <input name="telefono" value={form.telefono} onChange={handleChange} className={inputCls(errors.telefono)} />
+              <input
+                name="telefono"
+                value={form.telefono}
+                onChange={handleChange}
+                className={inputCls(errors.telefono)}
+              />
             </Field>
           </section>
 
           <section className="bg-white rounded-2xl border p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase">
-              Rol
-            </h2>
+            <h2 className="text-sm font-semibold text-black uppercase">Rol</h2>
 
             <Field label="Rol" error={errors.rol_id}>
-              <select name="rol_id" value={form.rol_id} onChange={handleChange} className={inputCls(errors.rol_id)}>
+              <select
+                name="rol_id"
+                value={form.rol_id}
+                onChange={handleChange}
+                className={inputCls(errors.rol_id)}
+              >
                 <option value="">Seleccionar…</option>
                 {ROLES.map((r) => (
                   <option key={r.id} value={r.id}>{r.nombre}</option>
@@ -233,9 +245,7 @@ export default function RegistroUsuario() {
           </section>
 
           <section className="bg-white rounded-2xl border p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-500 uppercase">
-              Información adicional
-            </h2>
+            <h2 className="text-sm font-semibold text-black uppercase">Información adicional</h2>
 
             <Field label="Notas">
               <textarea
@@ -249,12 +259,20 @@ export default function RegistroUsuario() {
           </section>
 
           <div className="flex gap-3">
-            <button type="button" onClick={handleReset} className="px-5 py-2.5 border rounded-xl">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="px-5 py-2.5 border rounded-xl text-black font-medium hover:bg-slate-50"
+            >
               Limpiar
             </button>
 
-            <button type="submit" className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white">
-              Guardar usuario
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 py-2.5 rounded-xl bg-blue-600 text-white font-medium disabled:opacity-60"
+            >
+              {loading ? "Guardando..." : "Guardar usuario"}
             </button>
           </div>
 
@@ -264,11 +282,15 @@ export default function RegistroUsuario() {
   );
 }
 
-function Field({ label, error, children }: any) {
+function Field({ label, error, children }: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex justify-between">
-        <label className="text-sm font-medium">{label}</label>
+        <label className="text-sm font-medium text-black">{label}</label>
         {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
       {children}
@@ -277,7 +299,7 @@ function Field({ label, error, children }: any) {
 }
 
 function inputCls(error?: string) {
-  return `w-full px-3 py-2 rounded-xl border ${
-    error ? "border-red-300" : "border-slate-200"
-  }`;
+  return `w-full px-3 py-2 rounded-xl border text-black ${
+    error ? "border-red-300 bg-red-50" : "border-slate-200"
+  } focus:outline-none focus:ring-2 focus:ring-blue-500`;
 }

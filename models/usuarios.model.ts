@@ -3,7 +3,7 @@ import pool from "@/lib/db";
 export interface Usuario {
   id: number;
   nombre: string;
-  telefono: number;
+  telefono: string;
   email: string;
   password_hash: string;
   rol_id: number;
@@ -26,7 +26,7 @@ export async function getUserByEmail(email: string): Promise<Usuario | undefined
 }
 
 // Obtener usuario por teléfono
-export async function getUserByTelefono(telefono: number): Promise<Usuario | undefined> {
+export async function getUserByTelefono(telefono: string): Promise<Usuario | undefined> {
   const conn = await pool.getConnection();
   try {
     const rows = await conn.query(
@@ -48,7 +48,7 @@ async function getNextId(conn: any): Promise<number> {
 // Crear nuevo usuario
 export async function createUser(
   nombre: string,
-  telefono: number,
+  telefono: string,
   email: string,
   password_hash: string,
   rol_id: number,
@@ -70,7 +70,7 @@ export async function createUser(
 // Actualizar usuario
 export async function updateUser(
   id: number,
-  telefono: number,
+  telefono: string,
   email: string,
   password_hash: string,
   rol_id: number,

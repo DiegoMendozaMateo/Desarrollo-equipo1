@@ -6,7 +6,7 @@ export interface Paciente {
     edad: number;
     genero: string;
     direccion: string;
-    telefono: number;
+    telefono: string;
     email: string;
     nombre_representante?: string;
     telefono_representante?: number;
@@ -30,7 +30,7 @@ export async function getPacienteById(id: number) {
 }
 
 // Crear nuevo paciente
-export async function createPaciente(nombre: string, edad: number, genero: string, direccion: string, telefono: number, email: string, nombre_representante?: string, telefono_representante?: number) {
+export async function createPaciente(nombre: string, edad: number, genero: string, direccion: string, telefono: string, email: string, nombre_representante?: string, telefono_representante?: number) {
     const conn = await pool.getConnection();
     const [result] = await conn.query(
         "INSERT INTO pacientes (nombre, edad, genero, direccion, telefono, email, nombre_representante, telefono_representante) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",

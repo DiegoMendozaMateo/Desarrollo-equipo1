@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     // 5. Crear usuario
     const userId = await createUser(
       nombre,
-      Number(telefono),
+      telefono,
       email,
       hashedPassword,
       Number(rol_id),
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         message: "Usuario registrado con éxito",
-        userId,
+        userId: Number(userId),
       },
       { status: 201 }
     );
